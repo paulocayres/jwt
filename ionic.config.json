@@ -1,0 +1,8 @@
+{
+  "name": "jwt",
+  "app_id": "1e54a22f",
+  "type": "ionic-angular",
+  "integrations": {
+    "cordova": {}
+  }
+}
