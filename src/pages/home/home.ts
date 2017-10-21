@@ -1,51 +1,111 @@
 import { Component } from '@angular/core';
-import { NavController } from 'ionic-angular';
-import base64url from "base64url";
-import crypto from "crypto";
-
+import { Auth, User, UserDetails, IDetailedError } from '@ionic/cloud-angular';
+import { NavController, LoadingController } from 'ionic-angular';
+import { InAppBrowser } from 'ionic-native';
+ 
 @Component({
-  selector: 'page-home',
-  templateUrl: 'home.html'
+  templateUrl: 'build/pages/home/home.html',
 })
 export class HomePage {
-
-  payload: any = {
-    "user_id": "123",
-    "username": "josh",
-    "country": "Australia"
-  };
-
-  header: any = {
-    "alg": "HS256",
-    "typ": "JWT"
-  };
-
- token:string;
- key:string       = 'superDuperSecret';
- algorithm:string = 'sha256';
- hash:any
- hmac: any;
- final:any;
-  constructor(public navCtrl: NavController) {
-
-  this.payload = btoa(JSON.stringify(this.payload));
-  this.header = btoa(JSON.stringify(this.header));
-  this.token = this.header + '.' + this.payload;
-  this.hmac = crypto.createHmac(this.algorithm, this.key);
-  this.hmac.setEncoding('base64');
-  this.hmac.write(this.token);
-  this.hmac.end();
-  this.hash = this.hmac.read();
-  this.hash = base64url.fromBase64(this.hash);
-  console.log(this.header);
-  console.log(this.payload);
-  console.log(this.hash);
-
-  this.final = this.header + '.' + this.payload + '.' + this.hash;
-
-  console.log(this.final);
-
-
+ 
+  loading: any;
+ 
+  constructor(public navCtrl: NavController, public auth: Auth, public user: User, private loadingCtrl: LoadingController) {
+ 
   }
-
+ 
+  showLoader(){
+ 
+    this.loading = this.loadingCtrl.create({
+      content: "Authenticating..."
+    });
+ 
+    this.loading.present();
+ 
+  }
+ 
+  signupEmail(email, password){
+ 
+    this.showLoader();
+ 
+    let details: UserDetails = {
+        'email': email,
+        'password': password
+    };
+ 
+    this.auth.signup(details).then(() => {
+ 
+        this.loading.dismiss();
+ 
+        // success
+        console.log(this.user);
+ 
+    }, (err: IDetailedError<string[]>) => {
+ 
+        this.loading.dismiss();
+ 
+        // handle errors
+        for(let error of err.details){
+ 
+            if(error === 'required_email'){
+                // email missing
+            } else if(error === 'required_password'){
+                // password missing
+            } else if(error === 'conflict_email'){
+                // email already in use
+            } else if (error === 'conflict_username'){
+                // username alerady in use
+            } else if (error === ' invalid_email'){
+                // email not valid
+            }
+ 
+        }
+ 
+    });
+ 
+  }
+ 
+  login(email, password){
+ 
+    this.showLoader();
+ 
+    let details: UserDetails = {
+        'email': email,
+        'password': password
+    };
+ 
+    this.auth.login('basic', details).then(() => {
+ 
+        this.loading.dismiss();
+ 
+        // success
+        console.log(this.user);
+ 
+    }, (err) => {
+ 
+        this.loading.dismiss();
+ 
+        // problem logging in
+        console.log(err);
+ 
+    });
+ 
+  }
+ 
+  logout(){
+    this.auth.logout();
+  }
+ 
+  testSignup(){
+    this.signupEmail('me@test.com', 'password');
+  }
+ 
+  testLogout(){
+    this.logout();
+  }
+ 
+  testLogin(){
+    this.login('me@test.com', 'password');
+  }
+ 
 }
